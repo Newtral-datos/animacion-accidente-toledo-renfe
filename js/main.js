@@ -14,7 +14,7 @@ const CONFIG = {
   // Ruta de las imágenes. {i} se sustituye por el número con ceros delante.
   path: 'frames/img_{i}.webp',
   firstFrame: 1,
-  lastFrame: 3,
+  lastFrame: 4,
   padding: 3,          // img_001 → 3 dígitos
 
   // Fracción del tramo de cada imagen dedicada al fundido hacia la siguiente.
@@ -49,18 +49,29 @@ const CONFIG = {
 
   // El mapa de situación ocupa un paso de la secuencia, como si fuera una
   // imagen más. Aquí se dice tras cuál de las imágenes va:
-  //   0 → antes de todas · 2 → entre la 2 y la 3 · null → sin mapa
-  mapaDespuesDe: 0,
+  //   'fin' → el último · 0 → antes de todas · 2 → entre la 2 y la 3
+  //   null  → sin mapa
+  // Con 'fin' sigue quedando el último aunque cambie el número de imágenes.
+  mapaDespuesDe: 'fin',
 };
 
 /* El mapa añade un paso extra, así que la secuencia tiene una posición más
    que imágenes. Estas dos funciones traducen entre ambas numeraciones. */
 const IMAGENES = CONFIG.lastFrame - CONFIG.firstFrame + 1;
 const HAY_MAPA = CONFIG.mapaDespuesDe !== null && typeof L !== 'undefined';
-const PASO_MAPA = HAY_MAPA ? CONFIG.mapaDespuesDe : -1;
-const TOTAL = IMAGENES + (HAY_MAPA ? 1 : 0);
+const MAPA_AL_FINAL = HAY_MAPA && CONFIG.mapaDespuesDe === 'fin';
+const PASO_MAPA = !HAY_MAPA ? -1
+  : MAPA_AL_FINAL ? IMAGENES
+  : CONFIG.mapaDespuesDe;
 
-const esPasoMapa = (paso) => paso === PASO_MAPA;
+/* Si el mapa cierra la pieza se le reservan dos posiciones en vez de una.
+   El recorrido se mide entre posiciones consecutivas, así que la última no
+   tiene tramo propio: sin esta segunda posición, el mapa aparecería pero la
+   vía no llegaría a trazarse. */
+const TOTAL = IMAGENES + (!HAY_MAPA ? 0 : MAPA_AL_FINAL ? 2 : 1);
+
+const esPasoMapa = (paso) => HAY_MAPA
+  && (paso === PASO_MAPA || (MAPA_AL_FINAL && paso === PASO_MAPA + 1));
 
 /** Posición en la secuencia → índice de imagen (null si ese paso es el mapa) */
 function imagenDe(paso) {
@@ -107,7 +118,7 @@ function rangoDePasos(desde, hasta) {
 const captions = [...document.querySelectorAll('.caption')].map((el) => {
   // Atado al mapa
   if (el.dataset.mapa !== undefined && PASO_MAPA >= 0) {
-    return { el, ...rangoDePasos(PASO_MAPA, PASO_MAPA) };
+    return { el, ...rangoDePasos(PASO_MAPA, MAPA_AL_FINAL ? PASO_MAPA + 1 : PASO_MAPA) };
   }
   // Atado a una imagen o a un rango de imágenes
   if (el.dataset.img) {
@@ -259,15 +270,22 @@ function render(force = false) {
      el canvas no cambia (mismo i, mismo alpha) pero la vía sí se va trazando,
      así que si esto fuera después, la animación se quedaría congelada. */
   if (HAY_MAPA) {
-    const peso = esPasoMapa(i) ? 1 - alpha : (esPasoMapa(i + 1) ? alpha : 0);
+    // Suma de los dos lados del fundido: si ambas posiciones son el mapa
+    // (el caso de cierre, que ocupa dos), el peso se mantiene en 1.
+    const peso = (esPasoMapa(i) ? 1 - alpha : 0) + (esPasoMapa(i + 1) ? alpha : 0);
     opacidadMapa(peso);
 
-    // Avance dentro del paso del mapa, normalizado a su parte estable:
-    // así la vía termina de trazarse antes de que empiece el fundido.
     let avance;
-    if (esPasoMapa(i)) avance = Math.min(t / (1 - CONFIG.fadeRatio), 1);
-    else if (esPasoMapa(i + 1)) avance = 0;  // aún está entrando
-    else avance = i > PASO_MAPA ? 1 : 0;     // ya pasó, o todavía no llega
+    if (esPasoMapa(i)) {
+      // Si lo siguiente también es mapa no hay fundido que respetar y se
+      // aprovecha el tramo entero; si no, se deja libre la cola del fundido
+      // para que la vía acabe de trazarse antes de empezar a desaparecer.
+      avance = esPasoMapa(i + 1) ? t : Math.min(t / (1 - CONFIG.fadeRatio), 1);
+    } else if (esPasoMapa(i + 1)) {
+      avance = 0;                        // aún está entrando
+    } else {
+      avance = i > PASO_MAPA ? 1 : 0;    // ya pasó, o todavía no llega
+    }
     animarMapa(avance);
   }
 
