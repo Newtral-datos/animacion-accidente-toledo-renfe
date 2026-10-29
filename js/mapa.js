@@ -43,6 +43,7 @@ function crearMapa() {
     doubleClickZoom: false,
     boxZoom: false,
     keyboard: false,
+    zoomSnap: 0,              // zoom fraccionario: permite acercarse sin saltos
   });
 
   // Teselas oficiales de OpenStreetMap: no piden clave de API.
@@ -220,31 +221,76 @@ function dibujarViaHasta(avance) {
   capaViaHalo.setLatLngs(tramos);
 }
 
-/** Ajusta la vista para que entren todos los puntos, con aire alrededor */
-function encuadrarMapa() {
+/* Dos encuadres entre los que se navega al avanzar el scroll:
+   el general, con las capitales de referencia, y el de la zona del suceso. */
+let vistaLejos = null;
+let vistaCerca = null;
+
+const MARGEN = [40, 120];
+
+function calcularVistas() {
   if (!mapa) return;
-  const puntos = [[LUGAR.lat, LUGAR.lon], ...CIUDADES.map((c) => [c.lat, c.lon])];
-  // Más margen abajo: ahí caen los rótulos
-  mapa.fitBounds(L.latLngBounds(puntos), {
-    paddingTopLeft: [40, 70],
-    paddingBottomRight: [40, 150],
-    animate: false,
-  });
+
+  const generales = L.latLngBounds([
+    [LUGAR.lat, LUGAR.lon], ...CIUDADES.map((c) => [c.lat, c.lon]),
+  ]);
+
+  /* Zona del suceso. El encuadre se ancla al sur del punto para que el lugar
+     del accidente quede en la franja alta de la pantalla, despejado del
+     rótulo, que ocupa la parte baja. */
+  const cercanas = L.latLngBounds([
+    [LUGAR.lat - 0.30, LUGAR.lon - 0.13],
+    [LUGAR.lat + 0.07, LUGAR.lon + 0.13],
+  ]);
+
+  const margen = L.point(MARGEN[0], MARGEN[1]);
+  vistaLejos = { centro: generales.getCenter(), zoom: mapa.getBoundsZoom(generales, false, margen) };
+  vistaCerca = { centro: cercanas.getCenter(), zoom: mapa.getBoundsZoom(cercanas, false, margen) };
+}
+
+const entre = (a, b, t) => a + (b - a) * t;
+let ultimoZoom = null;
+
+/** Sitúa la vista entre el encuadre general (0) y el de la zona (1) */
+function encuadrarMapa(acercamiento = 0) {
+  if (!mapa) return;
+  if (!vistaLejos) calcularVistas();
+  if (!vistaLejos) return;
+
+  const zoom = entre(vistaLejos.zoom, vistaCerca.zoom, acercamiento);
+
+  // Reencuadrar en cada fotograma no aporta nada y obliga a recargar teselas
+  if (ultimoZoom !== null && Math.abs(zoom - ultimoZoom) < 0.01
+      && acercamiento > 0.001 && acercamiento < 0.999) return;
+  ultimoZoom = zoom;
+
+  mapa.setView([
+    entre(vistaLejos.centro.lat, vistaCerca.centro.lat, acercamiento),
+    entre(vistaLejos.centro.lng, vistaCerca.centro.lng, acercamiento),
+  ], zoom, { animate: false });
 }
 
 /** Leaflet necesita que le avisen cuando cambia el tamaño del contenedor */
 function redimensionarMapa() {
   if (!mapa) return;
   mapa.invalidateSize({ animate: false });
-  encuadrarMapa();
+  calcularVistas();
+  ultimoZoom = null;
+  animarMapa(avanceActual);
 }
 
 /* -------------------------------------------------------------- animación */
 
-/* Reparto del paso del mapa: primero se traza la vía de norte a sur y,
-   solapando un poco al final, aparece el punto del accidente. */
-const FIN_TRAZADO = 0.78;
-const INICIO_PUNTO = 0.70;
+/* Reparto del recorrido del mapa, que ocupa dos posiciones de la secuencia
+   y sostiene dos rótulos seguidos:
+     0,00 – 0,38   se traza la vía de norte a sur      (primer rótulo)
+     0,33 – 0,46   aparece el punto del accidente
+     0,52 – 0,88   se acerca a la zona del suceso      (segundo rótulo)
+     0,88 – 1,00   reposo antes de pasar a la imagen            */
+const FIN_TRAZADO = 0.38;
+const INICIO_PUNTO = 0.33;
+const INICIO_ZOOM = 0.52;
+const FIN_ZOOM = 0.88;
 
 const suave = (x) => x * x * (3 - 2 * x);
 const tramo = (v, a, b) => Math.min(Math.max((v - a) / (b - a), 0), 1);
@@ -263,6 +309,7 @@ function animarMapa(avance) {
   avanceActual = avance;
 
   dibujarViaHasta(suave(tramo(avance, 0, FIN_TRAZADO)));
+  encuadrarMapa(suave(tramo(avance, INICIO_ZOOM, FIN_ZOOM)));
 
   const paneAcc = mapa.getPane('accidente');
   if (!paneAcc) return;

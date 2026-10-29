@@ -53,6 +53,11 @@ const CONFIG = {
   //   null  → sin mapa
   // Con 'fin' sigue quedando el último aunque cambie el número de imágenes.
   mapaDespuesDe: 0,
+
+  // Cuántas posiciones de la secuencia ocupa el mapa. Con 2 dispone del
+  // doble de recorrido: una para la vista general y otra para el zoom,
+  // como si fueran dos diapositivas.
+  pasosMapa: 2,
 };
 
 /* El mapa añade un paso extra, así que la secuencia tiene una posición más
@@ -64,19 +69,22 @@ const PASO_MAPA = !HAY_MAPA ? -1
   : MAPA_AL_FINAL ? IMAGENES
   : CONFIG.mapaDespuesDe;
 
-/* Si el mapa cierra la pieza se le reservan dos posiciones en vez de una.
-   El recorrido se mide entre posiciones consecutivas, así que la última no
-   tiene tramo propio: sin esta segunda posición, el mapa aparecería pero la
-   vía no llegaría a trazarse. */
-const TOTAL = IMAGENES + (!HAY_MAPA ? 0 : MAPA_AL_FINAL ? 2 : 1);
+/* Posiciones que ocupa el mapa. Si cierra la pieza se le añade una extra:
+   el recorrido se mide entre posiciones consecutivas, así que la última no
+   tiene tramo propio y sin ese hueco la vía no llegaría a trazarse. */
+const PASOS_MAPA = !HAY_MAPA ? 0
+  : Math.max(1, CONFIG.pasosMapa || 1) + (MAPA_AL_FINAL ? 1 : 0);
+
+const TOTAL = IMAGENES + PASOS_MAPA;
 
 const esPasoMapa = (paso) => HAY_MAPA
-  && (paso === PASO_MAPA || (MAPA_AL_FINAL && paso === PASO_MAPA + 1));
+  && paso >= PASO_MAPA && paso < PASO_MAPA + PASOS_MAPA;
 
 /** Posición en la secuencia → índice de imagen (null si ese paso es el mapa) */
 function imagenDe(paso) {
   if (esPasoMapa(paso)) return null;
-  return paso < PASO_MAPA || PASO_MAPA < 0 ? paso : paso - 1;
+  if (PASO_MAPA < 0 || paso < PASO_MAPA) return paso;
+  return paso - PASOS_MAPA;
 }
 
 /* ------------------------------------------------------------------ modo */
@@ -101,7 +109,7 @@ const progressBar = document.getElementById('progressBar');
 /** Índice de imagen → posición en la secuencia (el mapa corre el resto) */
 function pasoDe(indiceImagen) {
   if (PASO_MAPA < 0) return indiceImagen;
-  return indiceImagen < PASO_MAPA ? indiceImagen : indiceImagen + 1;
+  return indiceImagen < PASO_MAPA ? indiceImagen : indiceImagen + PASOS_MAPA;
 }
 
 /** Convierte un rango de pasos en un rango de progreso de scroll */
@@ -116,9 +124,23 @@ function rangoDePasos(desde, hasta) {
 }
 
 const captions = [...document.querySelectorAll('.caption')].map((el) => {
-  // Atado al mapa
+  /* Atado al mapa. Si el paso del mapa tiene que sostener varios rótulos
+     seguidos, se reparte en tantos tramos como diga data-partes:
+       <p class="caption" data-mapa data-parte="1" data-partes="2"> */
   if (el.dataset.mapa !== undefined && PASO_MAPA >= 0) {
-    return { el, ...rangoDePasos(PASO_MAPA, MAPA_AL_FINAL ? PASO_MAPA + 1 : PASO_MAPA) };
+    const base = rangoDePasos(PASO_MAPA, PASO_MAPA + PASOS_MAPA - 1);
+    const partes = parseInt(el.dataset.partes || '1', 10);
+    if (partes > 1) {
+      const parte = parseInt(el.dataset.parte || '1', 10);
+      const tramo = (base.out - base.in) / partes;
+      return {
+        el,
+        in: base.in + tramo * (parte - 1),
+        // se recorta un poco el final para que no se pisen entre sí
+        out: base.in + tramo * parte - tramo * 0.12,
+      };
+    }
+    return { el, ...base };
   }
   // Atado a una imagen o a un rango de imágenes
   if (el.dataset.img) {
@@ -275,18 +297,22 @@ function render(force = false) {
     const peso = (esPasoMapa(i) ? 1 - alpha : 0) + (esPasoMapa(i + 1) ? alpha : 0);
     opacidadMapa(peso);
 
+    /* Avance interno de 0 a 1 repartido entre todas las posiciones del
+       mapa, para que su coreografía (trazado, punto, zoom) se despliegue a
+       lo largo de todo su recorrido y no dentro de un solo tramo. */
     let avance;
     if (esPasoMapa(i)) {
       // Si lo siguiente también es mapa no hay fundido que respetar y se
       // aprovecha el tramo entero; si no, se deja libre la cola del fundido
-      // para que la vía acabe de trazarse antes de empezar a desaparecer.
-      avance = esPasoMapa(i + 1) ? t : Math.min(t / (1 - CONFIG.fadeRatio), 1);
+      // para que todo acabe antes de empezar a desaparecer.
+      const dentro = esPasoMapa(i + 1) ? t : Math.min(t / (1 - CONFIG.fadeRatio), 1);
+      avance = (i - PASO_MAPA + dentro) / Math.max(1, CONFIG.pasosMapa || 1);
     } else if (esPasoMapa(i + 1)) {
       avance = 0;                        // aún está entrando
     } else {
       avance = i > PASO_MAPA ? 1 : 0;    // ya pasó, o todavía no llega
     }
-    animarMapa(avance);
+    animarMapa(Math.min(avance, 1));
   }
 
   // Evita repintar si nada ha cambiado de forma apreciable
