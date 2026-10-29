@@ -212,9 +212,9 @@ body.is-embed .scroll-track { display: none; }
   z-index: 3;
   pointer-events: none;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 0 1.5rem 11vh;
+  padding: 0 1.5rem;
 }
 
 .caption {
@@ -233,14 +233,17 @@ body.is-embed .scroll-track { display: none; }
   backdrop-filter: blur(10px);
   border-left: 3px solid var(--verde);
   opacity: 0;
-  transform: translateY(1rem);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  /* --t (0→1) lo publica js/main.js: es el avance dentro del tramo de este
+     rótulo. El texto entra por abajo, cruza la pantalla y sale por arriba,
+     acompañando al scroll. La transición va solo en la opacidad: si
+     afectara al transform, el movimiento iría con retardo respecto al dedo. */
+  top: 50%;
+  --recorrido: 86vh;
+  transform: translateY(calc(-50% + (0.5 - var(--t, 0.5)) * var(--recorrido)));
+  transition: opacity 0.45s ease;
 }
 
-.caption.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.caption.is-visible { opacity: 1; }
 
 /* Destacado dentro de un rótulo: <b> o .dato */
 .caption b,
@@ -355,6 +358,9 @@ body.tiene-banda .captions {
 /* Justo debajo de la imagen, centrado en horizontal.
    Anclado al borde real de la imagen, así que nunca la invade. */
 body.tiene-banda .caption {
+  /* el hueco bajo la imagen es estrecho: recorrido corto y sin centrar */
+  --recorrido: 2.5rem;
+  transform: translateY(calc((0.5 - var(--t, 0.5)) * var(--recorrido)));
   /* relativo a .captions, que ya arranca en el borde inferior de la imagen */
   top: 1.2rem;
   bottom: auto;
@@ -393,7 +399,7 @@ body.tiene-banda .stage::after {
   .marca__sep { height: 0.85rem; }
   .marca__kicker { font-size: 0.55rem; letter-spacing: 0.1em; }
 
-  .captions { padding: 0 1rem 14vh; }
+  .captions { padding: 0 1rem; }
 
   .caption {
     padding: 0.85rem 1rem;
@@ -418,7 +424,9 @@ body.tiene-banda .stage::after {
 @media (max-height: 500px) and (orientation: landscape) {
   .marca { top: 0.7rem; left: 0.8rem; }
   .marca__logo { height: 0.9rem; }
-  .captions { padding: 0 1rem 7vh; }
+  .captions { padding: 0 1rem; }
+  /* en horizontal hay muy poco alto: recorrido contenido */
+  .caption { --recorrido: 42vh; }
   .caption { font-size: 0.82rem; padding: 0.55rem 0.9rem; }
   .credito { display: none; }
 }
@@ -426,6 +434,5 @@ body.tiene-banda .stage::after {
 /* ---------- Accesibilidad ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .caption { transition: opacity 0.2s linear; transform: none; }
-  .caption.is-visible { transform: none; }
+  .caption { transition: opacity 0.2s linear; --recorrido: 0rem; }
 }

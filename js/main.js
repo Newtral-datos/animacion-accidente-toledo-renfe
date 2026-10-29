@@ -112,14 +112,22 @@ function pasoDe(indiceImagen) {
   return indiceImagen < PASO_MAPA ? indiceImagen : indiceImagen + PASOS_MAPA;
 }
 
+/* Cuánto se adelanta y cuánto se demora un rótulo respecto al tramo de sus
+   propias imágenes, en fracción de tramo. Se quedan cortos a propósito: si
+   se estiraran más, una imagen sin rótulo propio aparecería siempre tapada
+   por la caja de la anterior o de la siguiente, en vez de verse limpia. */
+const ROTULO_ANTES = 0.10;
+const ROTULO_DESPUES = 0.40;
+
 /** Convierte un rango de pasos en un rango de progreso de scroll */
 function rangoDePasos(desde, hasta) {
   const ancho = 1 / (TOTAL - 1);
   const esc = 1 - CONFIG.tailHold; // los rótulos viven en el scroll real
   return {
-    in: Math.max(0, (desde * ancho - ancho * 0.25) * esc),
+    in: Math.max(0, (desde * ancho - ancho * ROTULO_ANTES) * esc),
     // el rótulo del último paso se queda hasta el final
-    out: hasta >= TOTAL - 1 ? 1 : Math.min(1, (hasta * ancho + ancho * 0.6) * esc),
+    out: hasta >= TOTAL - 1 ? 1
+      : Math.min(1, (hasta * ancho + ancho * ROTULO_DESPUES) * esc),
   };
 }
 
@@ -398,6 +406,13 @@ function updateOverlays(p) {
   if (progressBar) progressBar.style.width = `${p * 100}%`;
   for (const c of captions) {
     c.el.classList.toggle('is-visible', p >= c.in && p <= c.out);
+
+    /* Avance dentro del tramo del propio rótulo, de 0 a 1. El CSS lo
+       convierte en un desplazamiento vertical, así el texto acompaña al
+       scroll en vez de quedarse clavado. */
+    const ancho = c.out - c.in;
+    const t = ancho > 0 ? (p - c.in) / ancho : 0;
+    c.el.style.setProperty('--t', Math.min(Math.max(t, 0), 1).toFixed(4));
   }
 }
 
