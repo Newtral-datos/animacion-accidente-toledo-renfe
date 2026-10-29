@@ -52,7 +52,7 @@ const CONFIG = {
   //   'fin' → el último · 0 → antes de todas · 2 → entre la 2 y la 3
   //   null  → sin mapa
   // Con 'fin' sigue quedando el último aunque cambie el número de imágenes.
-  mapaDespuesDe: 'fin',
+  mapaDespuesDe: 0,
 };
 
 /* El mapa añade un paso extra, así que la secuencia tiene una posición más

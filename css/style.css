@@ -16,6 +16,9 @@
   --tipo: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   --caption-max: 44rem;
+
+  /* Gris del mapa, en sintonía con las fotografías desaturadas */
+  --mapa-fondo: #d9d9d9;
 }
 
 * { box-sizing: border-box; }
@@ -53,80 +56,108 @@ body.is-embed .stage { position: fixed; }
 
 /* ---------- Mapa de situación ---------- */
 
+/* El z-index es imprescindible: crea contexto de apilamiento y encierra
+   dentro los paneles de Leaflet, que usan z-index 400 y si no se montarían
+   por encima de los rótulos y de la marca.
+   Orden de la escena: canvas (0) · mapa (1) · viñeteado (2) · rótulos (3) ·
+   marca, progreso y crédito (4) · cargador (5). */
 .mapa {
   position: absolute;
   inset: 0;
-  z-index: 1;              /* sobre el canvas, bajo rótulos y marca */
-  background: var(--negro);
+  z-index: 1;
+  background: var(--mapa-fondo);
   opacity: 0;
   visibility: hidden;
 }
 
 /* Leaflet trae su propia tipografía y colores; los alineamos con la pieza */
 .mapa .leaflet-container {
-  background: var(--negro);
+  background: var(--mapa-fondo);
   font-family: var(--tipo);
 }
 
-/* Monocromo oscuro a partir del mapa estándar de OSM.
-   El filtro va solo en la capa de teselas: si se aplicara al contenedor,
-   el invert() también daría la vuelta a marcadores y etiquetas. */
+/* Gris claro, para que entone con las fotografías desaturadas.
+   El filtro va solo en la capa de teselas: aplicado al contenedor afectaría
+   también a marcadores y etiquetas. */
 .mapa .leaflet-tile-pane {
-  filter: grayscale(1) invert(1) brightness(0.92) contrast(0.82);
+  filter: grayscale(1) contrast(0.78) brightness(1.04);
 }
 
 .mapa .leaflet-control-attribution {
-  background: rgba(10, 12, 14, 0.65);
-  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(10, 12, 14, 0.55);
   font-size: 0.58rem;
   padding: 2px 6px;
 }
 
 .mapa .leaflet-control-attribution a {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(10, 12, 14, 0.7);
 }
 
-/* Etiquetas de los puntos */
+/* Etiquetas de los puntos.
+   El texto va dentro de un <span> porque Leaflet escribe un transform en
+   línea sobre el marcador para posicionarlo, y cualquier transform propio
+   quedaría pisado. El marcador se deja a tamaño cero y el span se coloca
+   respecto a él.
+   Oscuras con halo claro: sobre el mapa gris, en blanco serían ilegibles. */
 .mapa .etiqueta {
-  width: auto !important;
-  height: auto !important;
+  width: 0 !important;
+  height: 0 !important;
   margin: 0 !important;
-  white-space: nowrap;
-  transform: translate(10px, -9px);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.62);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   background: none;
   border: 0;
 }
 
-.mapa .etiqueta--grande {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.92);
+.mapa .etiqueta > span {
+  position: absolute;
+  left: 11px;
+  top: -9px;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1f2327;
+  text-shadow:
+     0 1px 0 rgba(255,255,255,0.9),
+     0 0 6px rgba(255,255,255,0.95);
 }
 
-.mapa .etiqueta--accidente {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--verde);
+.mapa .etiqueta--grande > span {
+  font-size: 0.78rem;
+  color: #0a0c0e;
+}
+
+/* El del accidente va en pastilla verde, el mismo recurso que el dato
+   destacado del artículo.
+   Se coloca a la IZQUIERDA del punto: a la derecha chocaba con las etiquetas
+   de Los Yébenes (arriba) y Urda (abajo), que caen justo a ese lado. */
+.mapa .etiqueta--accidente > span {
+  left: auto;
+  right: 16px;          /* a la izquierda del punto */
+  top: -11px;
+  font-size: 0.7rem;
+  color: #000;
+  background: var(--verde);
+  padding: 3px 7px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  transform: translate(18px, -10px);
+  text-shadow: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
 }
 
 @media (max-width: 640px) {
-  .mapa .etiqueta { font-size: 0.6rem; transform: translate(8px, -8px); }
-  .mapa .etiqueta--grande { font-size: 0.68rem; }
-  .mapa .etiqueta--accidente { font-size: 0.64rem; transform: translate(14px, -9px); }
+  .mapa .etiqueta > span { font-size: 0.6rem; left: 9px; }
+  .mapa .etiqueta--grande > span { font-size: 0.68rem; }
+  .mapa .etiqueta--accidente > span { font-size: 0.64rem; left: auto; right: 12px; }
 }
 
-/* Viñeteado: asienta los rótulos sobre la imagen sin oscurecerla entera */
+/* Viñeteado: asienta los rótulos sobre la imagen sin oscurecerla entera.
+   Va por encima del mapa para que el logo blanco se lea también sobre él. */
 .stage::after {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 2;
   pointer-events: none;
   background:
     linear-gradient(to bottom, rgba(10,12,14,0.72) 0%, rgba(10,12,14,0) 26%),
@@ -146,7 +177,7 @@ body.is-embed .scroll-track { display: none; }
   position: absolute;
   top: 1.6rem;
   left: 1.8rem;
-  z-index: 3;
+  z-index: 4;
   display: flex;
   align-items: center;
   gap: 0.9rem;
@@ -178,7 +209,7 @@ body.is-embed .scroll-track { display: none; }
 .captions {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
   display: flex;
   align-items: flex-end;
@@ -195,7 +226,7 @@ body.is-embed .scroll-track { display: none; }
   line-height: 1.38;
   font-weight: 600;
   letter-spacing: -0.01em;
-  text-align: left;
+  text-align: center;
   text-wrap: balance;
   color: var(--blanco);
   background: rgba(10, 12, 14, 0.82);
@@ -225,7 +256,7 @@ body.is-embed .scroll-track { display: none; }
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 3;
+  z-index: 4;
   height: 3px;
   background: rgba(73, 73, 73, 0.55);
 }
@@ -241,7 +272,7 @@ body.is-embed .scroll-track { display: none; }
 .loader {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -290,7 +321,7 @@ body.is-embed .scroll-track { display: none; }
   position: absolute;
   right: 1.8rem;
   bottom: 1.6rem;
-  z-index: 3;
+  z-index: 4;
   margin: 0;
   font-size: 0.68rem;
   font-weight: 500;

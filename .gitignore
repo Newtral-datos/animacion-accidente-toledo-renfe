@@ -1,0 +1,9 @@
+# Bloque de integración para WordPress: se copia a mano al CMS,
+# no forma parte del sitio publicado
+embed/wordpress.html
+
+# Copias de seguridad que deja tools/preparar-frames.sh en cada pasada
+.frames-anteriores-*/
+
+# macOS
+.DS_Store

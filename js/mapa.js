@@ -65,20 +65,22 @@ function crearMapa() {
 
   // Ciudades de referencia
   for (const c of CIUDADES) {
-    // Las capitales van con anillo hueco: un punto relleno taparía el
-    // topónimo que ya dibuja el mapa base justo en esa coordenada.
+    // Relleno oscuro con aro claro, para que se separe del gris del mapa.
+    // El radio se mantiene contenido porque el mapa base rotula la ciudad
+    // justo en esta coordenada y un punto mayor se comería el topónimo.
     L.circleMarker([c.lat, c.lon], c.grande ? {
-      radius: 7,
-      color: 'rgba(255,255,255,0.75)',
+      radius: 3.5,
+      color: '#ffffff',
       weight: 1.5,
-      fill: false,
+      fillColor: '#1f2327',
+      fillOpacity: 1,
       interactive: false,
     } : {
       radius: 3,
-      color: 'rgba(255,255,255,0.85)',
+      color: 'rgba(10,12,14,0.8)',
       weight: 1.5,
-      fillColor: '#ffffff',
-      fillOpacity: 0.6,
+      fillColor: '#1f2327',
+      fillOpacity: 0.75,
       interactive: false,
     }).addTo(mapa);
 
@@ -87,7 +89,7 @@ function crearMapa() {
         interactive: false,
         icon: L.divIcon({
           className: 'etiqueta' + (c.grande ? ' etiqueta--grande' : ''),
-          html: c.nombre,
+          html: `<span>${c.nombre}</span>`,
           iconSize: null,
         }),
       }).addTo(mapa);
@@ -98,16 +100,16 @@ function crearMapa() {
   // hacerlo aparecer una vez trazada la vía
   L.circleMarker([LUGAR.lat, LUGAR.lon], {
     pane: 'accidente',
-    radius: 16, color: VERDE, weight: 1, opacity: 0.35,
-    fillColor: VERDE, fillOpacity: 0.12, interactive: false,
+    radius: 16, color: VERDE, weight: 1.5, opacity: 0.7,
+    fillColor: VERDE, fillOpacity: 0.22, interactive: false,
   }).addTo(mapa);
 
-  // Relleno blanco con aro verde: en verde sólido se confundiría con la vía,
-  // que pasa justo por este punto.
+  // Relleno oscuro con aro verde: en verde sólido se confundiría con la vía,
+  // que pasa justo por este punto, y en blanco con el mapa claro.
   L.circleMarker([LUGAR.lat, LUGAR.lon], {
     pane: 'accidente',
     radius: 6, color: VERDE, weight: 3,
-    fillColor: '#ffffff', fillOpacity: 1, interactive: false,
+    fillColor: '#0a0c0e', fillOpacity: 1, interactive: false,
   }).addTo(mapa);
 
   L.marker([LUGAR.lat, LUGAR.lon], {
@@ -115,7 +117,7 @@ function crearMapa() {
     interactive: false,
     icon: L.divIcon({
       className: 'etiqueta etiqueta--accidente',
-      html: LUGAR.nombre,
+      html: `<span>${LUGAR.nombre}</span>`,
       iconSize: null,
     }),
   }).addTo(mapa);
@@ -153,7 +155,7 @@ function cargarVia() {
       latSur = Math.min(...lats);
 
       const comun = { pane: 'via', interactive: false, lineJoin: 'round' };
-      capaViaHalo = L.polyline([], { ...comun, color: '#0a0c0e', weight: 5, opacity: 0.55 }).addTo(mapa);
+      capaViaHalo = L.polyline([], { ...comun, color: '#494949', weight: 5, opacity: 0.8 }).addTo(mapa);
       capaVia = L.polyline([], { ...comun, color: VERDE, weight: 2, opacity: 0.95 }).addTo(mapa);
 
       ultimoCorte = null;
