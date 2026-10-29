@@ -8,8 +8,8 @@ Dos cosas, por imagen:
   2. Recorta al centro a una proporción común, para que todas encuadren
      igual y el fundido no produzca un salto de escala.
 
-Uso:  normalizar.py <origen> <destino> [proporción] [ancho máximo]
-      normalizar.py imagenes-creadas/ /tmp/salida 1.7778 2560
+Uso:  normalizar.py <origen> <destino> [proporción] [ancho máximo] [invertir]
+      normalizar.py imagenes-creadas/ /tmp/salida 1.7778 2560 invertir
 
 El ancho máximo nunca amplía: si la imagen es más pequeña se deja tal cual,
 porque ampliar solo añade blandura sin aportar detalle.
@@ -67,6 +67,7 @@ def main():
     origen, destino = sys.argv[1], sys.argv[2]
     proporcion = float(sys.argv[3]) if len(sys.argv) > 3 else 16 / 9
     ancho_max = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+    invertir = len(sys.argv) > 5 and sys.argv[5] == 'invertir'
     os.makedirs(destino, exist_ok=True)
 
     # No se filtra por extensión: hay formatos que llegan con nombres raros
@@ -88,6 +89,12 @@ def main():
     if not archivos:
         print(f'No se han encontrado imágenes en {origen}')
         return 1
+
+    # Algunas exportaciones por capas numeran al revés de lo que cuenta la
+    # secuencia (p. ej. "..._0000_06" primero y "..._0005_01" último).
+    if invertir:
+        archivos.reverse()
+        print('  (orden invertido)')
 
     for n, nombre in enumerate(archivos, 1):
         im = Image.open(os.path.join(origen, nombre)).convert('RGB')

@@ -15,6 +15,7 @@
 #     --calidad N    calidad WebP 0-100           (por defecto 78)
 #     --fps N        solo para vídeo              (por defecto 30)
 #     --proporcion N relación de aspecto de salida (por defecto 1.7778 = 16:9)
+#     --invertir     invierte el orden de las imágenes de entrada
 # =============================================================================
 
 set -euo pipefail
@@ -23,6 +24,7 @@ ANCHO=2560
 CALIDAD=78
 FPS=30
 PROPORCION=1.7778   # 16:9
+INVERTIR=""
 ORIGEN=""
 
 while [[ $# -gt 0 ]]; do
@@ -31,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     --calidad) CALIDAD="$2"; shift 2 ;;
     --fps)     FPS="$2";     shift 2 ;;
     --proporcion) PROPORCION="$2"; shift 2 ;;
+    --invertir)   INVERTIR="invertir"; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *)         ORIGEN="$1";  shift ;;
   esac
@@ -72,7 +75,7 @@ fi
 # Recorta franjas lisas de los bordes y deja todas a la misma proporción,
 # para que el encuadre no salte entre una imagen y la siguiente.
 echo "Normalizando (proporción $PROPORCION, ancho máx ${ANCHO}px)…"
-python3 "$RAIZ/tools/normalizar.py" "$CRUDO" "$TEMP" "$PROPORCION" "$ANCHO" \
+python3 "$RAIZ/tools/normalizar.py" "$CRUDO" "$TEMP" "$PROPORCION" "$ANCHO" $INVERTIR \
   || { echo "Falló la normalización"; exit 1; }
 
 # --- 2. Apartar los frames anteriores ----------------------------------------

@@ -14,7 +14,7 @@ const CONFIG = {
   // Ruta de las imágenes. {i} se sustituye por el número con ceros delante.
   path: 'frames/img_{i}.webp',
   firstFrame: 1,
-  lastFrame: 4,
+  lastFrame: 6,
   padding: 3,          // img_001 → 3 dígitos
 
   // Fracción del tramo de cada imagen dedicada al fundido hacia la siguiente.
