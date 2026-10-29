@@ -51,6 +51,77 @@ body.is-embed .stage { position: fixed; }
   height: 100%;
 }
 
+/* ---------- Mapa de situación ---------- */
+
+.mapa {
+  position: absolute;
+  inset: 0;
+  z-index: 1;              /* sobre el canvas, bajo rótulos y marca */
+  background: var(--negro);
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Leaflet trae su propia tipografía y colores; los alineamos con la pieza */
+.mapa .leaflet-container {
+  background: var(--negro);
+  font-family: var(--tipo);
+}
+
+/* Monocromo oscuro a partir del mapa estándar de OSM.
+   El filtro va solo en la capa de teselas: si se aplicara al contenedor,
+   el invert() también daría la vuelta a marcadores y etiquetas. */
+.mapa .leaflet-tile-pane {
+  filter: grayscale(1) invert(1) brightness(0.92) contrast(0.82);
+}
+
+.mapa .leaflet-control-attribution {
+  background: rgba(10, 12, 14, 0.65);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.58rem;
+  padding: 2px 6px;
+}
+
+.mapa .leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Etiquetas de los puntos */
+.mapa .etiqueta {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  transform: translate(10px, -9px);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.62);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  background: none;
+  border: 0;
+}
+
+.mapa .etiqueta--grande {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.mapa .etiqueta--accidente {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--verde);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transform: translate(18px, -10px);
+}
+
+@media (max-width: 640px) {
+  .mapa .etiqueta { font-size: 0.6rem; transform: translate(8px, -8px); }
+  .mapa .etiqueta--grande { font-size: 0.68rem; }
+  .mapa .etiqueta--accidente { font-size: 0.64rem; transform: translate(14px, -9px); }
+}
+
 /* Viñeteado: asienta los rótulos sobre la imagen sin oscurecerla entera */
 .stage::after {
   content: "";

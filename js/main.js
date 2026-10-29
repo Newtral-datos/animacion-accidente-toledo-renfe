@@ -46,9 +46,27 @@ const CONFIG = {
   // Solo se nota cuando hay recorte. Útil si el sujeto no está centrado:
   //   focus: { 3: 0.35 }  → en la imagen 3, encuadra algo a la izquierda
   focus: {},
+
+  // El mapa de situación ocupa un paso de la secuencia, como si fuera una
+  // imagen más. Aquí se dice tras cuál de las imágenes va:
+  //   0 → antes de todas · 2 → entre la 2 y la 3 · null → sin mapa
+  mapaDespuesDe: 0,
 };
 
-const TOTAL = CONFIG.lastFrame - CONFIG.firstFrame + 1;
+/* El mapa añade un paso extra, así que la secuencia tiene una posición más
+   que imágenes. Estas dos funciones traducen entre ambas numeraciones. */
+const IMAGENES = CONFIG.lastFrame - CONFIG.firstFrame + 1;
+const HAY_MAPA = CONFIG.mapaDespuesDe !== null && typeof L !== 'undefined';
+const PASO_MAPA = HAY_MAPA ? CONFIG.mapaDespuesDe : -1;
+const TOTAL = IMAGENES + (HAY_MAPA ? 1 : 0);
+
+const esPasoMapa = (paso) => paso === PASO_MAPA;
+
+/** Posición en la secuencia → índice de imagen (null si ese paso es el mapa) */
+function imagenDe(paso) {
+  if (esPasoMapa(paso)) return null;
+  return paso < PASO_MAPA || PASO_MAPA < 0 ? paso : paso - 1;
+}
 
 /* ------------------------------------------------------------------ modo */
 
@@ -69,21 +87,37 @@ const progressBar = document.getElementById('progressBar');
      data-in / data-out → progreso 0-1 a mano
      data-img="4"       → atado a la imagen 4 (se calcula solo)
    Con data-img puedes añadir data-img-fin="6" para abarcar varias. */
+/** Índice de imagen → posición en la secuencia (el mapa corre el resto) */
+function pasoDe(indiceImagen) {
+  if (PASO_MAPA < 0) return indiceImagen;
+  return indiceImagen < PASO_MAPA ? indiceImagen : indiceImagen + 1;
+}
+
+/** Convierte un rango de pasos en un rango de progreso de scroll */
+function rangoDePasos(desde, hasta) {
+  const ancho = 1 / (TOTAL - 1);
+  const esc = 1 - CONFIG.tailHold; // los rótulos viven en el scroll real
+  return {
+    in: Math.max(0, (desde * ancho - ancho * 0.25) * esc),
+    // el rótulo del último paso se queda hasta el final
+    out: hasta >= TOTAL - 1 ? 1 : Math.min(1, (hasta * ancho + ancho * 0.6) * esc),
+  };
+}
+
 const captions = [...document.querySelectorAll('.caption')].map((el) => {
-  if (el.dataset.img) {
-    const desde = parseInt(el.dataset.img, 10) - CONFIG.firstFrame;
-    const hasta = el.dataset.imgFin
-      ? parseInt(el.dataset.imgFin, 10) - CONFIG.firstFrame
-      : desde;
-    const paso = 1 / (TOTAL - 1);
-    const esc = 1 - CONFIG.tailHold; // los rótulos viven en el scroll real
-    return {
-      el,
-      in: Math.max(0, (desde * paso - paso * 0.25) * esc),
-      // el rótulo de la última imagen se queda hasta el final
-      out: hasta >= TOTAL - 1 ? 1 : Math.min(1, (hasta * paso + paso * 0.6) * esc),
-    };
+  // Atado al mapa
+  if (el.dataset.mapa !== undefined && PASO_MAPA >= 0) {
+    return { el, ...rangoDePasos(PASO_MAPA, PASO_MAPA) };
   }
+  // Atado a una imagen o a un rango de imágenes
+  if (el.dataset.img) {
+    const desde = pasoDe(parseInt(el.dataset.img, 10) - CONFIG.firstFrame);
+    const hasta = el.dataset.imgFin
+      ? pasoDe(parseInt(el.dataset.imgFin, 10) - CONFIG.firstFrame)
+      : desde;
+    return { el, ...rangoDePasos(desde, hasta) };
+  }
+  // A mano, en progreso 0-1
   return {
     el,
     in: parseFloat(el.dataset.in),
@@ -93,7 +127,7 @@ const captions = [...document.querySelectorAll('.caption')].map((el) => {
 
 /* --------------------------------------------------------------- precarga */
 
-const frames = new Array(TOTAL);
+const frames = new Array(IMAGENES);
 let loadedCount = 0;
 
 const frameURL = (index) => {
@@ -124,13 +158,13 @@ function loadFrame(index) {
 async function preload(onProgress) {
   let next = 0;
   const worker = async () => {
-    while (next < TOTAL) {
+    while (next < IMAGENES) {
       await loadFrame(next++);
-      onProgress(loadedCount / TOTAL);
+      onProgress(loadedCount / IMAGENES);
     }
   };
   await Promise.all(
-    Array.from({ length: Math.min(CONFIG.concurrency, TOTAL) }, worker)
+    Array.from({ length: Math.min(CONFIG.concurrency, IMAGENES) }, worker)
   );
 }
 
@@ -147,6 +181,7 @@ function resizeCanvas() {
   canvas.width = Math.round(viewW * dpr);
   canvas.height = Math.round(viewH * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (HAY_MAPA) redimensionarMapa();
   render(true);
 }
 
@@ -189,8 +224,9 @@ function pintar(img, indice) {
 
 /** Si la imagen pedida aún no ha cargado, usa la más cercana disponible */
 function nearestLoaded(index) {
+  if (index === null || index < 0) return null;
   if (frames[index]) return frames[index];
-  for (let d = 1; d < TOTAL; d++) {
+  for (let d = 1; d < IMAGENES; d++) {
     if (frames[index - d]) return frames[index - d];
     if (frames[index + d]) return frames[index + d];
   }
@@ -219,29 +255,49 @@ function render(force = false) {
   let alpha = t <= inicioFade ? 0 : (t - inicioFade) / CONFIG.fadeRatio;
   alpha = smoothstep(Math.min(Math.max(alpha, 0), 1));
 
+  /* El mapa se actualiza siempre, antes de la salida rápida: durante su paso
+     el canvas no cambia (mismo i, mismo alpha) pero la vía sí se va trazando,
+     así que si esto fuera después, la animación se quedaría congelada. */
+  if (HAY_MAPA) {
+    const peso = esPasoMapa(i) ? 1 - alpha : (esPasoMapa(i + 1) ? alpha : 0);
+    opacidadMapa(peso);
+
+    // Avance dentro del paso del mapa, normalizado a su parte estable:
+    // así la vía termina de trazarse antes de que empiece el fundido.
+    let avance;
+    if (esPasoMapa(i)) avance = Math.min(t / (1 - CONFIG.fadeRatio), 1);
+    else if (esPasoMapa(i + 1)) avance = 0;  // aún está entrando
+    else avance = i > PASO_MAPA ? 1 : 0;     // ya pasó, o todavía no llega
+    animarMapa(avance);
+  }
+
   // Evita repintar si nada ha cambiado de forma apreciable
   if (!force && i === lastI && Math.abs(alpha - lastAlpha) < 0.004) return;
   lastI = i;
   lastAlpha = alpha;
 
-  const actual = nearestLoaded(i);
-  const siguiente = nearestLoaded(i + 1);
-  if (!actual) return;
+  // El paso del mapa no tiene imagen: su peso va al contenedor de Leaflet
+  const imgActual = imagenDe(i);
+  const imgSiguiente = imagenDe(i + 1);
+  const actual = nearestLoaded(imgActual);
+  const siguiente = nearestLoaded(imgSiguiente);
 
   // Las bandas deben quedar en negro, no con restos del fotograma anterior
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#0a0c0e';
   ctx.fillRect(0, 0, viewW, viewH);
 
-  const caja = pintar(actual, i);
+  let caja = null;
+  if (actual) caja = pintar(actual, imgActual);
 
   if (alpha > 0 && siguiente && siguiente !== actual) {
     ctx.globalAlpha = alpha;
-    pintar(siguiente, i + 1);
+    const cajaSig = pintar(siguiente, imgSiguiente);
     ctx.globalAlpha = 1;
+    if (!caja) caja = cajaSig;
   }
 
-  marcarBordeImagen(caja);
+  if (caja) marcarBordeImagen(caja);
 }
 
 /* Publica dónde termina la imagen para que los rótulos puedan apoyarse
@@ -329,6 +385,10 @@ function initEmbedScroll() {
 /* -------------------------------------------------------------------- init */
 
 async function init() {
+  if (HAY_MAPA) {
+    crearMapa();
+    opacidadMapa(0);
+  }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
 
