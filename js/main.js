@@ -291,10 +291,12 @@ function render(force = false) {
   /* El mapa se actualiza siempre, antes de la salida rápida: durante su paso
      el canvas no cambia (mismo i, mismo alpha) pero la vía sí se va trazando,
      así que si esto fuera después, la animación se quedaría congelada. */
+  let pesoMapa = 0;
   if (HAY_MAPA) {
     // Suma de los dos lados del fundido: si ambas posiciones son el mapa
     // (el caso de cierre, que ocupa dos), el peso se mantiene en 1.
     const peso = (esPasoMapa(i) ? 1 - alpha : 0) + (esPasoMapa(i + 1) ? alpha : 0);
+    pesoMapa = peso;
     opacidadMapa(peso);
 
     /* Avance interno de 0 a 1 repartido entre todas las posiciones del
@@ -341,7 +343,13 @@ function render(force = false) {
     if (!caja) caja = cajaSig;
   }
 
-  if (caja) marcarBordeImagen(caja);
+  /* La banda negra solo existe si lo que manda en pantalla es una imagen.
+     Con el mapa delante hay que declarar que no la hay: si no, el body
+     conservaría la clase `tiene-banda` —de la imagen anterior, o de la
+     entrante a medio fundir— y los rótulos del mapa se dibujarían sin
+     fondo, en modo "bajo la imagen". */
+  const mandaElMapa = pesoMapa > 0.5;
+  marcarBordeImagen(caja && !mandaElMapa ? caja : { y: 0, h: viewH });
 }
 
 /* Publica dónde termina la imagen para que los rótulos puedan apoyarse
