@@ -1,0 +1,329 @@
+/* =========================================================================
+   Identidad Newtral
+   Verde de marca #01f3b3 · gris secundario #494949
+   ========================================================================= */
+
+:root {
+  --verde: #01f3b3;
+  --gris: #494949;
+  --negro: #0a0c0e;
+  --blanco: #ffffff;
+
+  --bg: var(--negro);
+  --fg: var(--blanco);
+
+  /* Si Newtral tiene fuente corporativa, cámbiala solo aquí */
+  --tipo: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --caption-max: 44rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--tipo);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.is-embed { overflow: hidden; }
+
+/* ---------- Escenario fijo ---------- */
+
+.stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh; /* evita el salto por la barra de navegación en móvil */
+  overflow: hidden;
+  background: var(--negro);
+}
+
+body.is-embed .stage { position: fixed; }
+
+#sequence {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Viñeteado: asienta los rótulos sobre la imagen sin oscurecerla entera */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(10,12,14,0.72) 0%, rgba(10,12,14,0) 26%),
+    linear-gradient(to top,    rgba(10,12,14,0.80) 0%, rgba(10,12,14,0) 38%);
+}
+
+/* ---------- Pista de scroll (solo standalone) ---------- */
+
+/* La altura define cuánto scroll consume la animación.
+   600vh ≈ 6 pantallas de recorrido. Súbelo para que vaya más lenta. */
+.scroll-track { height: 600vh; }
+body.is-embed .scroll-track { display: none; }
+
+/* ---------- Cabecera de marca ---------- */
+
+.marca {
+  position: absolute;
+  top: 1.6rem;
+  left: 1.8rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  pointer-events: none;
+}
+
+.marca__logo {
+  height: 1.45rem;
+  width: auto;
+  display: block;
+}
+
+.marca__sep {
+  width: 1px;
+  height: 1.1rem;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.marca__kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--verde);
+}
+
+/* ---------- Rótulos ---------- */
+
+.captions {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 1.5rem 11vh;
+}
+
+.caption {
+  position: absolute;
+  max-width: var(--caption-max);
+  margin: 0;
+  padding: 1.1rem 1.4rem;
+  font-size: clamp(1.05rem, 2.3vw, 1.55rem);
+  line-height: 1.38;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-wrap: balance;
+  color: var(--blanco);
+  background: rgba(10, 12, 14, 0.82);
+  backdrop-filter: blur(10px);
+  border-left: 3px solid var(--verde);
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.caption.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Destacado dentro de un rótulo: <b> o .dato */
+.caption b,
+.caption .dato {
+  color: var(--verde);
+  font-weight: 700;
+}
+
+/* ---------- Barra de progreso ---------- */
+
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  height: 3px;
+  background: rgba(73, 73, 73, 0.55);
+}
+
+.progress__bar {
+  height: 100%;
+  width: 0;
+  background: var(--verde);
+}
+
+/* ---------- Cargador ---------- */
+
+.loader {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  background: var(--negro);
+  transition: opacity 0.5s ease;
+}
+
+.loader.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader__logo {
+  height: 1.7rem;
+  width: auto;
+  margin-bottom: 0.4rem;
+  opacity: 0.95;
+}
+
+.loader__bar {
+  width: min(13rem, 46vw);
+  height: 2px;
+  background: var(--gris);
+}
+
+.loader__fill {
+  width: 0;
+  height: 100%;
+  background: var(--verde);
+  transition: width 0.2s linear;
+}
+
+.loader__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ---------- Crédito ---------- */
+
+.credito {
+  position: absolute;
+  right: 1.8rem;
+  bottom: 1.6rem;
+  z-index: 3;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.credito a {
+  color: rgba(255, 255, 255, 0.42);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.credito a:hover,
+.credito a:focus-visible {
+  color: var(--verde);
+}
+
+/* ---------- Banda negra (pantallas verticales) ----------
+   Cuando la imagen no llena el alto, el canvas deja banda arriba y abajo.
+   Los rótulos se apoyan justo bajo la imagen, sobre el negro, en vez de
+   taparla. --banda-inferior lo calcula js/main.js en cada repintado. */
+
+/* La zona de rótulos pasa a ser exactamente el hueco bajo la imagen */
+body.tiene-banda .captions {
+  top: var(--img-fin, 0px);
+  bottom: 0;
+  padding: 0 1.25rem;
+  align-items: flex-start;
+}
+
+/* Justo debajo de la imagen, centrado en horizontal.
+   Anclado al borde real de la imagen, así que nunca la invade. */
+body.tiene-banda .caption {
+  /* relativo a .captions, que ya arranca en el borde inferior de la imagen */
+  top: 1.2rem;
+  bottom: auto;
+  background: transparent;
+  backdrop-filter: none;
+  border-left: 0;
+  border-top: 0;
+  padding: 1.1rem 0 0;
+  text-align: center;
+}
+
+/* Filo corto centrado, en lugar del lateral de la versión horizontal */
+body.tiene-banda .caption::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2.5rem;
+  height: 3px;
+  margin-left: -1.25rem;
+  background: var(--verde);
+}
+
+/* Sin imagen detrás, el degradado inferior sobra */
+body.tiene-banda .stage::after {
+  background: linear-gradient(to bottom, rgba(10,12,14,0.72) 0%, rgba(10,12,14,0) 26%);
+}
+
+/* ---------- Móvil ---------- */
+
+@media (max-width: 640px) {
+  :root { --caption-max: 100%; }
+
+  .marca { top: 0.95rem; left: 1rem; gap: 0.6rem; }
+  .marca__logo { height: 1.05rem; }
+  .marca__sep { height: 0.85rem; }
+  .marca__kicker { font-size: 0.55rem; letter-spacing: 0.1em; }
+
+  .captions { padding: 0 1rem 8vh; }
+
+  .caption {
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    line-height: 1.32;
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+
+  body.tiene-banda .caption {
+    padding: 1rem 0 0;
+    left: 0;
+    right: 0;
+  }
+
+  .credito { right: 1rem; bottom: 0.9rem; font-size: 0.58rem; }
+  .loader__logo { height: 1.35rem; }
+}
+
+/* Móvil en horizontal: muy poco alto, hay que comprimir */
+@media (max-height: 500px) and (orientation: landscape) {
+  .marca { top: 0.7rem; left: 0.8rem; }
+  .marca__logo { height: 0.9rem; }
+  .captions { padding: 0 1rem 5vh; }
+  .caption { font-size: 0.9rem; padding: 0.6rem 0.9rem; }
+  .credito { display: none; }
+}
+
+/* ---------- Accesibilidad ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .caption { transition: opacity 0.2s linear; transform: none; }
+  .caption.is-visible { transform: none; }
+}

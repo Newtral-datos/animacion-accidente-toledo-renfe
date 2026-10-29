@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba de tamaños</title>
+  <style>
+    body {
+      margin: 0; padding: 1.5rem; background: #1c1c1e; color: #eee;
+      font: 13px/1.4 -apple-system, system-ui, sans-serif;
+      display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start;
+    }
+    figure { margin: 0; }
+    figcaption { margin-bottom: 0.5rem; color: #999; letter-spacing: 0.04em; }
+    iframe { border: 1px solid #444; display: block; background: #000; }
+  </style>
+</head>
+<body>
+  <figure>
+    <figcaption>iPhone 14 — 390 × 844</figcaption>
+    <iframe src="../index.html?embed=1" width="390" height="844"></iframe>
+  </figure>
+  <figure>
+    <figcaption>iPhone SE — 375 × 667</figcaption>
+    <iframe src="../index.html?embed=1" width="375" height="667"></iframe>
+  </figure>
+  <figure>
+    <figcaption>Móvil horizontal — 844 × 390</figcaption>
+    <iframe src="../index.html?embed=1" width="844" height="390"></iframe>
+  </figure>
+  <figure>
+    <figcaption>iPad — 768 × 1024</figcaption>
+    <iframe src="../index.html?embed=1" width="768" height="1024"></iframe>
+  </figure>
+
+  <script>
+    // Mueve todas las maquetas a la vez para comparar el mismo momento
+    function enviar(p) {
+      document.querySelectorAll('iframe').forEach((f) =>
+        f.contentWindow.postMessage({ type: 'toledo:progress', progress: p }, '*'));
+    }
+    window.enviar = enviar;
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'toledo:ready') enviar(window.__p || 0);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recreación del accidente de trenes en Urda | Newtral</title>
+  <link rel="icon" type="image/png" href="img/favicon-64.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Capa fija: el canvas donde se pintan las imágenes -->
+  <div class="stage">
+    <canvas id="sequence"></canvas>
+
+    <!-- Marca -->
+    <div class="marca">
+      <img class="marca__logo" src="img/logo-newtral-blanco.png" alt="Newtral">
+      <span class="marca__sep"></span>
+      <span class="marca__kicker">Recreación</span>
+    </div>
+
+    <!-- Textos que aparecen sobre la animación.
+         data-img="4"              → atado a la imagen 4
+         data-img="4" data-img-fin="6" → abarca de la 4 a la 6
+         data-in / data-out        → alternativa manual en progreso 0-1
+         Usa <b> para destacar un dato en verde. -->
+    <div class="captions">
+      <p class="caption" data-img="1">
+        <b>Iryo 6076</b> con ocho vagones
+      </p>
+      <p class="caption" data-img="2">
+        <b>Ave 02080</b> con siete coches
+      </p>
+      <p class="caption" data-img="3">
+        Los trenes detenidos a <b>25 km</b> de distancia. Van por la misma vía.
+      </p>
+    </div>
+
+    <p class="credito">
+      <a href="https://www.newtral.es/colision-trenes-alcance-toledo-fallecidos/20261028/"
+         target="_blank" rel="noopener">Newtral</a>
+    </p>
+
+    <!-- Barra de progreso. Útil en desarrollo; borrable. -->
+    <div class="progress"><div class="progress__bar" id="progressBar"></div></div>
+
+    <div class="loader" id="loader">
+      <img class="loader__logo" src="img/logo-newtral-blanco.png" alt="Newtral">
+      <div class="loader__bar"><div class="loader__fill" id="loaderFill"></div></div>
+      <span class="loader__label">Cargando</span>
+    </div>
+  </div>
+
+  <!-- Pista de scroll: solo existe en modo standalone.
+       En modo embed la altura la aporta el artículo que contiene el iframe. -->
+  <div class="scroll-track" id="scrollTrack"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
