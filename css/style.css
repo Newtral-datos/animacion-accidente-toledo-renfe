@@ -342,52 +342,12 @@ body.is-embed .scroll-track { display: none; }
   color: var(--verde);
 }
 
-/* ---------- Banda negra (pantallas verticales) ----------
-   Cuando la imagen no llena el alto, el canvas deja banda arriba y abajo.
-   Los rótulos se apoyan justo bajo la imagen, sobre el negro, en vez de
-   taparla. --banda-inferior lo calcula js/main.js en cada repintado. */
-
-/* La zona de rótulos pasa a ser exactamente el hueco bajo la imagen */
-body.tiene-banda .captions {
-  top: var(--img-fin, 0px);
-  bottom: 0;
-  padding: 0 1.25rem;
-  align-items: flex-start;
-}
-
-/* Justo debajo de la imagen, centrado en horizontal.
-   Anclado al borde real de la imagen, así que nunca la invade. */
-body.tiene-banda .caption {
-  /* el hueco bajo la imagen es estrecho: recorrido corto y sin centrar */
-  --recorrido: 2.5rem;
-  transform: translateY(calc((0.5 - var(--t, 0.5)) * var(--recorrido)));
-  /* relativo a .captions, que ya arranca en el borde inferior de la imagen */
-  top: 1.2rem;
-  bottom: auto;
-  background: transparent;
-  backdrop-filter: none;
-  border-left: 0;
-  border-top: 0;
-  padding: 1.1rem 0 0;
-  text-align: center;
-}
-
-/* Filo corto centrado, en lugar del lateral de la versión horizontal */
-body.tiene-banda .caption::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 2.5rem;
-  height: 3px;
-  margin-left: -1.25rem;
-  background: var(--verde);
-}
-
-/* Sin imagen detrás, el degradado inferior sobra */
-body.tiene-banda .stage::after {
-  background: linear-gradient(to bottom, rgba(10,12,14,0.72) 0%, rgba(10,12,14,0) 26%);
-}
+/* ---------- Pantallas verticales ----------
+   El rótulo NO se ancla al hueco bajo la imagen: se comporta igual que en
+   escritorio, cruzando la pantalla de abajo arriba con su fondo. Por eso
+   mantiene el fondo oscuro aunque pase por encima de la foto.
+   --img-fin y la clase `tiene-banda` los sigue calculando js/main.js, pero
+   ya no cambian la posición del texto. */
 
 /* ---------- Móvil ---------- */
 
@@ -402,18 +362,13 @@ body.tiene-banda .stage::after {
   .captions { padding: 0 1rem; }
 
   .caption {
+    --recorrido: 70vh;
     padding: 0.85rem 1rem;
     font-size: 0.88rem;
     line-height: 1.45;
     left: 1rem;
     right: 1rem;
     max-width: none;
-  }
-
-  body.tiene-banda .caption {
-    padding: 1rem 0 0;
-    left: 0;
-    right: 0;
   }
 
   .credito { right: 1rem; bottom: 0.9rem; font-size: 0.58rem; }

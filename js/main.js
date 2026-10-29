@@ -39,8 +39,9 @@ const CONFIG = {
 
   // Dónde se coloca la imagen cuando sobra alto (pantallas verticales).
   // 0 = pegada arriba · 0.5 = centrada · 1 = pegada abajo.
-  // Por debajo de 0.5 el hueco queda abajo, que es donde van los rótulos.
-  alineacionVertical: 0.34,
+  // Centrada: los rótulos ya no se apoyan en el hueco inferior, lo cruzan,
+  // así que el aire se reparte por igual arriba y abajo.
+  alineacionVertical: 0.5,
 
   // Punto de interés horizontal por imagen, de 0 (izquierda) a 1 (derecha).
   // Solo se nota cuando hay recorte. Útil si el sujeto no está centrado:
