@@ -393,7 +393,7 @@ body.tiene-banda .stage::after {
   .marca__sep { height: 0.85rem; }
   .marca__kicker { font-size: 0.55rem; letter-spacing: 0.1em; }
 
-  .captions { padding: 0 1rem 8vh; }
+  .captions { padding: 0 1rem 14vh; }
 
   .caption {
     padding: 0.85rem 1rem;
@@ -418,7 +418,7 @@ body.tiene-banda .stage::after {
 @media (max-height: 500px) and (orientation: landscape) {
   .marca { top: 0.7rem; left: 0.8rem; }
   .marca__logo { height: 0.9rem; }
-  .captions { padding: 0 1rem 5vh; }
+  .captions { padding: 0 1rem 7vh; }
   .caption { font-size: 0.82rem; padding: 0.55rem 0.9rem; }
   .credito { display: none; }
 }
