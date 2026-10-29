@@ -3,72 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recreación del accidente de trenes en Urda | Newtral</title>
-  <link rel="icon" type="image/png" href="img/favicon-64.png">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="css/style.css">
+  <title>Así ha sido el accidente de trenes en Urda, Toledo | Newtral</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    .col {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+    h1 {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin: 2rem 0 1rem;
+      text-wrap: balance;
+    }
+    .lede {
+      font-size: 1.3rem;
+      color: #494949;
+      text-align: justify;
+      text-justify: inter-word;
+    }
+    /* Si el destacado cae a caballo entre dos líneas, que cada trozo
+       conserve su fondo y su relleno en lugar de partirse a medias */
+    .lede span {
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+    .firma {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #494949;
+      border-top: 3px solid #01f3b3;
+      display: inline-block;
+      padding-top: 0.6rem;
+      margin-top: 3.5rem;
+    }
+    .fuente {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 0.85rem;
+      margin-top: 1.5rem;
+    }
+    .fuente a {
+      color: #1a1a1a;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 2px solid #01f3b3;
+      padding-bottom: 1px;
+    }
+    .fuente a:hover { background: #01f3b3; }
+
+    /* Bloque de aviso al pie */
+    .aviso {
+      text-align: left;
+      margin: 4rem 0 6rem;
+      padding: 1.75rem 0 0;
+      border-top: 3px solid #01f3b3;
+    }
+    .aviso h2 {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0 0 1rem;
+    }
+    .aviso p {
+      font-size: 1.02rem;
+      line-height: 1.65;
+      color: #494949;
+      margin: 0 0 1rem;
+    }
+    .aviso p:last-child { margin-bottom: 0; }
+    .aviso a {
+      color: #1a1a1a;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 2px solid #01f3b3;
+    }
+    .aviso a:hover { background: #01f3b3; }
+
+    /* --- Lo único que hay que copiar al CMS --- */
+    .toledo-scroller {
+      position: relative;
+      /* Altura = cuánto scroll consume la animación.
+         600vh ≈ 6 pantallas. Súbelo para que vaya más despacio. */
+      height: 600vh;
+      margin: 4rem 0;
+      background: #0d0f12;
+    }
+    .toledo-scroller iframe {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;   /* en iOS, 100vh se cuela bajo la barra de direcciones */
+      border: 0;
+      display: block;
+    }
+
+    /* En móvil el recorrido puede acortarse: menos scroll por imagen */
+    @media (max-width: 640px) {
+      .toledo-scroller { height: 450vh; }
+    }
+    /* ----------------------------------------- */
+  </style>
 </head>
 <body>
 
-  <!-- Capa fija: el canvas donde se pintan las imágenes -->
-  <div class="stage">
-    <canvas id="sequence"></canvas>
-
-    <!-- Mapa de situación. Ocupa un paso de la secuencia, como si fuera
-         una imagen más, y funde igual que ellas. -->
-    <div class="mapa" id="mapa" aria-hidden="true"></div>
-
-    <!-- Marca -->
-    <div class="marca">
-      <img class="marca__logo" src="img/logo-newtral-blanco.png" alt="Newtral">
-      <span class="marca__sep"></span>
-      <span class="marca__kicker">Recreación</span>
-    </div>
-
-    <!-- Textos que aparecen sobre la animación.
-         data-img="4"              → atado a la imagen 4
-         data-img="4" data-img-fin="6" → abarca de la 4 a la 6
-         data-in / data-out        → alternativa manual en progreso 0-1
-         Usa <b> para destacar un dato en verde. -->
-    <div class="captions">
-      <p class="caption" data-mapa>
-        El accidente se produjo entre <b>Los Yébenes</b> y <b>Urda</b>, al sur de Toledo.
-      </p>
-      <p class="caption" data-img="1">
-        <b>Iryo 6076</b> con ocho vagones
-      </p>
-      <p class="caption" data-img="2">
-        <b>Ave 02080</b> con siete coches
-      </p>
-      <p class="caption" data-img="3">
-        Los trenes detenidos a <b>25 km</b> de distancia. Van por la misma vía.
-      </p>
-    </div>
-
-    <p class="credito">
+  <div class="col">
+    <p class="firma">Recreación</p>
+    <h1>Así ha sido el accidente de trenes de Alta Velocidad en Urda, Toledo</h1>
+    <p class="lede">Dos trenes de pasajeros han colisionado a primera hora de este miércoles a la altura de la estación de Urda (Toledo). Al menos <span style="background:#01f3b3; padding:1px 4px; border-radius:0px; color:black; box-shadow:0px 4px 18px rgba(0,0,0,0.08); cursor:pointer;">69 personas han fallecido</span>, según el presidente de Castilla-La Mancha, Emiliano García Page.</p>
+    <p class="fuente">
       <a href="https://www.newtral.es/colision-trenes-alcance-toledo-fallecidos/20261028/"
-         target="_blank" rel="noopener">Newtral</a>
+         target="_blank" rel="noopener">Todo lo que sabemos en Newtral en este enlace</a>
     </p>
-
-    <!-- Barra de progreso. Útil en desarrollo; borrable. -->
-    <div class="progress"><div class="progress__bar" id="progressBar"></div></div>
-
-    <div class="loader" id="loader">
-      <img class="loader__logo" src="img/logo-newtral-blanco.png" alt="Newtral">
-      <div class="loader__bar"><div class="loader__fill" id="loaderFill"></div></div>
-      <span class="loader__label">Cargando</span>
-    </div>
   </div>
 
-  <!-- Pista de scroll: solo existe en modo standalone.
-       En modo embed la altura la aporta el artículo que contiene el iframe. -->
-  <div class="scroll-track" id="scrollTrack"></div>
+  <!-- El atributo data-toledo-scroller es lo que busca embed.js -->
+  <div class="toledo-scroller" data-toledo-scroller>
+    <iframe src="animacion.html?embed=1" title="Recreación del accidente de trenes en Urda" loading="lazy"></iframe>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/mapa.js"></script>
-  <script src="js/main.js"></script>
+  <div class="col">
+    <aside class="aviso">
+      <h2>Informarse con fuentes oficiales</h2>
+      <p>Ante una situación de emergencia es frecuente encontrar publicaciones en redes sociales que difunden información no contrastada o mensajes desinformativos.</p>
+      <p>Infórmate con fuentes oficiales y evita compartir mensajes en los que no se especifique la fuente de la información que se difunde o esta no sea confiable.</p>
+      <p>Si tienes dudas sobre la veracidad de un contenido, puedes enviar tu consulta por WhatsApp a <a href="https://api.whatsapp.com/send/?phone=34627280815&amp;text&amp;type=phone_number&amp;app_absent=0" target="_blank" rel="noopener">nuestro servicio de verificación</a>.</p>
+      <p><a href="https://www.newtral.es/imagenes-falsas-colision-trenes-urda-toledo/20261028/" target="_blank" rel="noopener">En este artículo</a> estamos recopilando las imágenes sacadas de contexto y generadas con inteligencia artificial que se vinculan falsamente a la tragedia de Urda.</p>
+    </aside>
+  </div>
+
+  <script src="embed/embed.js"></script>
 </body>
 </html>

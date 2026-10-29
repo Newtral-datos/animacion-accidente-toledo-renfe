@@ -69,9 +69,22 @@ def main():
     ancho_max = int(sys.argv[4]) if len(sys.argv) > 4 else 0
     os.makedirs(destino, exist_ok=True)
 
-    exts = ('.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff')
-    archivos = sorted(f for f in os.listdir(origen)
-                      if f.lower().endswith(exts) and not f.startswith('.'))
+    # No se filtra por extensión: hay formatos que llegan con nombres raros
+    # (.jfif es JPEG, por ejemplo). Se intenta abrir cada archivo y se
+    # descarta lo que no sea una imagen, incluido .DS_Store y compañía.
+    candidatos = sorted(f for f in os.listdir(origen) if not f.startswith('.'))
+    archivos = []
+    for nombre in candidatos:
+        ruta = os.path.join(origen, nombre)
+        if not os.path.isfile(ruta):
+            continue
+        try:
+            with Image.open(ruta) as prueba:
+                prueba.verify()
+            archivos.append(nombre)
+        except Exception:
+            print(f'  (se ignora {nombre}: no es una imagen legible)')
+
     if not archivos:
         print(f'No se han encontrado imágenes en {origen}')
         return 1

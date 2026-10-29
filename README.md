@@ -9,22 +9,24 @@ Pensada para 15-20 imágenes y para embeberse en un artículo mediante iframe.
 python3 -m http.server 8765
 ```
 
-- Animación sola: http://127.0.0.1:8765/index.html
-- Artículo de ejemplo con el embed: http://127.0.0.1:8765/embed/articulo-ejemplo.html
+- Pieza completa (artículo + animación): http://127.0.0.1:8765/
+- Animación sola, la que va en el iframe: http://127.0.0.1:8765/animacion.html
 
 No hay paso de compilación. GSAP y Lenis se cargan por CDN.
 
 ## Estructura
 
 ```
-index.html                   la pieza (canvas, marca y rótulos)
+index.html                   el artículo: texto + animación embebida
+animacion.html               la animación (canvas, marca y rótulos)
 css/style.css                identidad Newtral
 js/main.js                   precarga, render con fundido y scrub
+js/mapa.js                   mapa de situación y trazado de la vía
+data/via-ave.geojson         línea AVE Madrid–Sevilla (ADIF), aligerada
 frames/                      img_001.webp … (ahora: 2 imágenes reales)
 imagenes-creadas/            originales sin procesar
 img/                         logo y favicon
 embed/embed.js               va en el ARTÍCULO, manda el progreso al iframe
-embed/articulo-ejemplo.html  ejemplo de integración
 tools/preparar-frames.sh     deja las imágenes listas (escala, WebP, renumera)
 tools/normalizar.py          recorta franjas y unifica proporción
 tools/test-movil.html        previsualización en varios tamaños de pantalla
@@ -58,7 +60,7 @@ Dos modos, detectados automáticamente:
 
 | Modo | Cuándo | Fuente del progreso |
 |---|---|---|
-| standalone | se abre `index.html` directamente | ScrollTrigger sobre `.scroll-track` |
+| standalone | se abre `animacion.html` directamente | ScrollTrigger sobre `.scroll-track` |
 | embed | dentro de un iframe, o con `?embed=1` | `postMessage` desde el artículo |
 
 En modo embed **el iframe no scrollea por dentro**. El artículo tiene un
@@ -125,7 +127,7 @@ corporativa, se cambia en un solo sitio, la variable `--tipo` de `css/style.css`
 
 ## Rótulos
 
-Van en `index.html`. Se pueden situar de dos maneras:
+Van en `animacion.html`. Se pueden situar de dos maneras:
 
 ```html
 <!-- atado a una imagen concreta -->
@@ -194,7 +196,7 @@ está instalado.
 
 ```html
 <div class="toledo-scroller" data-toledo-scroller>
-  <iframe src="RUTA/index.html?embed=1" title="Reconstrucción del accidente" loading="lazy"></iframe>
+  <iframe src="RUTA/animacion.html?embed=1" title="Recreación del accidente" loading="lazy"></iframe>
 </div>
 
 <style>
@@ -229,5 +231,5 @@ Para depurar en modo standalone, Lenis queda expuesto como `window.__lenis`
 
 ## Limpieza antes de publicar
 
-- La barra de progreso inferior (`.progress` en `index.html`) es una ayuda de
+- La barra de progreso inferior (`.progress` en `animacion.html`) es una ayuda de
   desarrollo. Bórrala si no la quieres en la versión final.
